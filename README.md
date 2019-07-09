@@ -1,5 +1,5 @@
 fileWatcher package is a utility to monitor new files in a directory.
-Its mainly used as an ingress monitor for file based transfers.
+It's mainly used as an ingress monitor for file based transfers.
 
 
 FileWatcher has a TTL which is used by a buffer to avoid reporting new files.
