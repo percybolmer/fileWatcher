@@ -51,6 +51,8 @@ func (watcher *FileWatcher) Stop() {
 func NewFileWatcher() (watcher *FileWatcher) {
 	watcher = &FileWatcher{found: map[string]int64{}}
 	// Starts a gofunction that checks the timestamp on the items, remove them if neccessary
+	watcher.executionInterval = executionIntervaldefault
+	watcher.ttl = ttldeafult
 	ctxroot := context.Background()
 	ctx, cancel := context.WithCancel(ctxroot)
 	watcher.cancelBuffer = cancel
