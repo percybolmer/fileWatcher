@@ -60,16 +60,16 @@ func NewFileWatcher() (watcher *FileWatcher) {
 		interval := time.Tick(time.Second * 1)
 		for {
 			select {
-				case now := <- interval:
-					watcher.Lock()
-					for k, v := range watcher.found {
-						if now.Unix()-v > watcher.ttl {
-							delete(watcher.found, k) // If the item is older than given time setting, delete it from buffer
-						}
+			case now := <- interval:
+				watcher.Lock()
+				for k, v := range watcher.found {
+					if now.Unix()-v > watcher.ttl {
+						delete(watcher.found, k) // If the item is older than given time setting, delete it from buffer
 					}
-					watcher.Unlock()
-					case <- ctx.Done():
-						return
+				}
+				watcher.Unlock()
+			case <- ctx.Done():
+				return
 			}
 		}
 	}()
@@ -79,31 +79,31 @@ func NewFileWatcher() (watcher *FileWatcher) {
 // WatchDirectory monitors a directory and returns files and new files to the given Channel
 // It monitors for the set default time
 func (watcher *FileWatcher) WatchDirectory(ctx context.Context, out chan<- string, directoryPath string) {
-	go func(){
+	go func(watcher *FileWatcher){
 		ticker := time.NewTicker(watcher.executionInterval * time.Second)
 		for {
 			select {
-				case <- ticker.C:
-					files, err := ioutil.ReadDir(directoryPath)
-					if err != nil {
-						log.Fatal(err)
-					}
-					for _, f := range files {
-						if f.IsDir() == false {
-							// Add the File to the found map so that we dont send the same on back again
-							_, ok := watcher.found[f.Name()]
-							if !ok {
-								watcher.Lock()
-								watcher.found[f.Name()] = time.Now().Unix()
-								watcher.Unlock()
-								out <- f.Name()
-							}
-
+			case <- ticker.C:
+				files, err := ioutil.ReadDir(directoryPath)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, f := range files {
+					if f.IsDir() == false {
+						// Add the File to the found map so that we dont send the same on back again
+						_, ok := watcher.found[f.Name()]
+						if !ok {
+							watcher.Lock()
+							watcher.found[f.Name()] = time.Now().Unix()
+							watcher.Unlock()
+							out <- f.Name()
 						}
+
 					}
-				case <- ctx.Done():
-					return
+				}
+			case <- ctx.Done():
+				return
 			}
 		}
-	}()
+	}(watcher)
 }
