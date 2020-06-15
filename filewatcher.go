@@ -80,7 +80,7 @@ func NewFileWatcher() (watcher *FileWatcher) {
 // It monitors for the set default time
 func (watcher *FileWatcher) WatchDirectory(ctx context.Context, out chan<- string, directoryPath string) {
 	go func(watcher *FileWatcher){
-		ticker := time.NewTicker(watcher.executionInterval * time.Second)
+		ticker := time.NewTicker(watcher.executionInterval)
 		for {
 			select {
 			case <- ticker.C:
