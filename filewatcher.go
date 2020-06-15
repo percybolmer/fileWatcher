@@ -5,14 +5,13 @@ package filewatcher
 
 import (
 	"io/ioutil"
-	"log"
 	"sync"
 	"context"
 	"time"
 )
 
 // executionInterval is how often we should monitor that specific target
-var executionIntervaldefault = time.Second * 10
+var executionIntervaldefault = time.Second * 1
 
 // ttl is used to describe how long the files can live in memory
 var ttldeafult int64 = 3600
@@ -23,7 +22,7 @@ type FileWatcher struct {
 	found map[string]int64
 	ttl int64
 	executionInterval time.Duration
-
+	ErrorChan chan error
 	cancelBuffer context.CancelFunc
 }
 
@@ -53,6 +52,7 @@ func NewFileWatcher() (watcher *FileWatcher) {
 	// Starts a gofunction that checks the timestamp on the items, remove them if neccessary
 	watcher.executionInterval = executionIntervaldefault
 	watcher.ttl = ttldeafult
+	watcher.ErrorChan = make(chan error,10)
 	ctxroot := context.Background()
 	ctx, cancel := context.WithCancel(ctxroot)
 	watcher.cancelBuffer = cancel
@@ -86,7 +86,7 @@ func (watcher *FileWatcher) WatchDirectory(ctx context.Context, out chan<- strin
 			case <- ticker.C:
 				files, err := ioutil.ReadDir(directoryPath)
 				if err != nil {
-					log.Fatal(err)
+					watcher.ErrorChan <- err
 				}
 				for _, f := range files {
 					if f.IsDir() == false {
